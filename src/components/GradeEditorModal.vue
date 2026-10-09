@@ -65,14 +65,14 @@ function handleKeydown(e: KeyboardEvent) {
 <template>
   <div
     v-if="isOpen && student && lesson"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+    class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200 overflow-y-auto"
     @click.self="onClose"
     @keydown="handleKeydown"
   >
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden transform transition-all">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden transform transition-all my-auto">
       
-      <!-- Header -->
-      <div class="px-6 py-4 bg-gradient-to-r from-slate-50 to-indigo-50/40 border-b border-slate-200 flex items-start justify-between">
+      <!-- Header (Pinned top) -->
+      <div class="px-5 py-3 sm:px-6 sm:py-4 bg-gradient-to-r from-slate-50 to-indigo-50/40 border-b border-slate-200 flex items-start justify-between shrink-0">
         <div>
           <div class="flex items-center gap-2 text-indigo-700 font-semibold text-sm">
             <User class="w-4 h-4 text-indigo-500" />
@@ -89,14 +89,14 @@ function handleKeydown(e: KeyboardEvent) {
 
         <button
           @click="onClose"
-          class="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-200/60 transition-colors"
+          class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
         >
           <X class="w-5 h-5" />
         </button>
       </div>
 
-      <!-- Body -->
-      <div class="p-6 space-y-5">
+      <!-- Body (Scrollable if height exceeds screen) -->
+      <div class="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto overscroll-contain flex-1">
         
         <!-- Primary Value Input -->
         <div>
@@ -241,8 +241,8 @@ function handleKeydown(e: KeyboardEvent) {
 
       </div>
 
-      <!-- Footer Buttons -->
-      <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+      <!-- Footer Buttons (Pinned bottom) -->
+      <div class="px-5 py-3 sm:px-6 sm:py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
         <button
           type="button"
           @click="handleClear"

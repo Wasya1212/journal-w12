@@ -9,14 +9,15 @@ import {
   GraduationCap,
   CalendarDays,
   CheckCircle2,
-  RotateCcw
+  RotateCcw,
+  FileSpreadsheet
 } from 'lucide-vue-next';
 
 defineProps<{
   onOpenSettings: () => void;
 }>();
 
-const { journal, exportToJson, importFromJson, resetToDefaults } = useJournal();
+const { journal, exportToJson, exportToExcel, importFromJson, resetToDefaults } = useJournal();
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 function handleImportClick() {
@@ -105,14 +106,24 @@ function handleReset() {
             <span>Імпорт з JSON</span>
           </button>
 
-          <!-- Export Button -->
+          <!-- Export JSON Button -->
           <button
             @click="exportToJson"
-            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100/80 active:bg-indigo-100 shadow-xs transition-all cursor-pointer"
-            title="Завантажити поточний стан журналу у файл з датою та часом (journal_YYYY-MM-DD_HH-mm-ss.json)"
+            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl text-indigo-700 bg-indigo-50 border border-indigo-200/90 hover:bg-indigo-100/80 active:bg-indigo-100 shadow-xs transition-all cursor-pointer"
+            title="Завантажити поточний стан журналу у JSON з датою та часом (journal_YYYY-MM-DD_HH-mm-ss.json)"
           >
             <Download class="w-4 h-4 text-indigo-600" />
-            <span>Експорт в JSON</span>
+            <span>JSON</span>
+          </button>
+
+          <!-- Export Excel Button -->
+          <button
+            @click="exportToExcel"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl text-emerald-800 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100/80 active:bg-emerald-100 shadow-xs transition-all cursor-pointer group"
+            title="Експортувати застилізований Excel (.xlsx) файл із закріпленими шапками, кольоровими оцінками та календарним плануванням"
+          >
+            <FileSpreadsheet class="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
+            <span>Excel (.xlsx)</span>
           </button>
 
           <!-- Settings Button -->

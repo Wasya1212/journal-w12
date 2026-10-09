@@ -10,6 +10,7 @@ import {
   CalendarDays,
   CheckCircle2,
   RotateCcw,
+  FileSpreadsheet,
   X
 } from 'lucide-vue-next';
 
@@ -19,7 +20,7 @@ const props = defineProps<{
   onOpenSettings: () => void;
 }>();
 
-const { journal, exportToJson, importFromJson, resetToDefaults } = useJournal();
+const { journal, exportToJson, exportToExcel, importFromJson, resetToDefaults } = useJournal();
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 function handleImportClick() {
@@ -38,6 +39,11 @@ async function handleFileChange(event: Event) {
 
 function handleExportClick() {
   exportToJson();
+  props.onClose();
+}
+
+async function handleExportExcelClick() {
+  await exportToExcel();
   props.onClose();
 }
 
@@ -184,7 +190,7 @@ function handleResetClick() {
                 </div>
               </button>
 
-              <!-- Export Button -->
+              <!-- Export JSON Button -->
               <button
                 @click="handleExportClick"
                 class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-indigo-700 bg-indigo-50/60 border border-indigo-200/80 hover:bg-indigo-100/80 active:bg-indigo-100 shadow-xs transition-all cursor-pointer"
@@ -194,7 +200,24 @@ function handleResetClick() {
                 </div>
                 <div class="text-left flex-1">
                   <div>Експорт в JSON</div>
-                  <div class="text-[11px] text-indigo-500 font-normal">Завантажити з датою та часом</div>
+                  <div class="text-[11px] text-indigo-500 font-normal">Завантажити бекап даних з міткою часу</div>
+                </div>
+              </button>
+
+              <!-- Export Excel Button -->
+              <button
+                @click="handleExportExcelClick"
+                class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-emerald-800 bg-emerald-50/80 border border-emerald-300 hover:bg-emerald-100/90 active:bg-emerald-100 shadow-xs transition-all cursor-pointer"
+              >
+                <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
+                  <FileSpreadsheet class="w-4 h-4" />
+                </div>
+                <div class="text-left flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <span>Експорт в Excel</span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.2 bg-emerald-200/70 text-emerald-900 rounded">.XLSX</span>
+                  </div>
+                  <div class="text-[11px] text-emerald-700/80 font-normal">Застилізована таблиця + планування</div>
                 </div>
               </button>
 

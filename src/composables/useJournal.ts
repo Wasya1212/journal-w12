@@ -1,6 +1,7 @@
 import { ref, watch } from 'vue';
 import type { JournalData, Student, Lesson, Grade } from '../types/journal';
 import { INITIAL_LESSONS_PLAN, CURRICULUM_TITLE } from '../data/curriculum';
+import { exportJournalToExcel } from '../utils/exportExcel';
 
 const STORAGE_KEY = 'teacher_journal_storage_v1';
 
@@ -242,6 +243,18 @@ export function useJournal() {
     return dataStr;
   }
 
+  async function exportToExcel(): Promise<string | null> {
+    try {
+      const fileName = await exportJournalToExcel(journal.value);
+      showToast(`Журнал експортовано у файл ${fileName}`);
+      return fileName;
+    } catch (err: any) {
+      console.error('Excel export error:', err);
+      showToast(`Помилка експорту в Excel: ${err?.message || 'Невідома помилка'}`, 'error');
+      return null;
+    }
+  }
+
   async function importFromJson(file: File): Promise<boolean> {
     try {
       const text = await file.text();
@@ -281,6 +294,7 @@ export function useJournal() {
     updateLesson,
     removeLesson,
     exportToJson,
+    exportToExcel,
     importFromJson,
     resetToDefaults,
     showToast
