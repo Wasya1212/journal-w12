@@ -1,21 +1,37 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import type { Student, Lesson } from '../types/journal';
 import { useJournal } from '../composables/useJournal';
 import {
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Plus,
+  Trash2,
+  Edit2,
+  Check,
+  X,
+  UserPlus
 } from 'lucide-vue-next';
 
 const props = defineProps<{
   onSelectCell: (student: Student, lesson: Lesson) => void;
 }>();
 
-const { journal, getGrade } = useJournal();
+const { journal, getGrade, addStudent, updateStudent, removeStudent } = useJournal();
 
 const studentQuery = ref('');
 const tableScrollRef = ref<HTMLDivElement | null>(null);
+
+// Inline Add Student State
+const isAddingStudent = ref(false);
+const newStudentName = ref('');
+const addStudentInputRef = ref<HTMLInputElement | null>(null);
+
+// Inline Edit Student State
+const editingStudentId = ref<string | null>(null);
+const editingStudentName = ref('');
+const editStudentInputRef = ref<HTMLInputElement | null>(null);
 
 const filteredStudents = computed(() => {
   const q = studentQuery.value.trim().toLowerCase();
@@ -84,6 +100,54 @@ function handleCellKeydown(e: KeyboardEvent, student: Student, lesson: Lesson) {
     props.onSelectCell(student, lesson);
   }
 }
+
+// Student Management Functions
+async function startAddStudent() {
+  isAddingStudent.value = true;
+  newStudentName.value = '';
+  await nextTick();
+  addStudentInputRef.value?.focus();
+}
+
+function handleAddStudentSubmit() {
+  if (newStudentName.value.trim()) {
+    addStudent(newStudentName.value);
+    newStudentName.value = '';
+    isAddingStudent.value = false;
+  }
+}
+
+function cancelAddStudent() {
+  isAddingStudent.value = false;
+  newStudentName.value = '';
+}
+
+async function startEditStudent(student: Student) {
+  editingStudentId.value = student.id;
+  editingStudentName.value = student.name;
+  await nextTick();
+  editStudentInputRef.value?.focus();
+  editStudentInputRef.value?.select();
+}
+
+function handleSaveEditStudent(id: string) {
+  if (editingStudentName.value.trim()) {
+    updateStudent(id, editingStudentName.value);
+  }
+  editingStudentId.value = null;
+  editingStudentName.value = '';
+}
+
+function cancelEditStudent() {
+  editingStudentId.value = null;
+  editingStudentName.value = '';
+}
+
+function handleRemoveStudent(student: Student) {
+  if (confirm(`Ви дійсно бажаєте видалити учня "${student.name}" із журналу?\nУсі оцінки цього учня також буде видалено.`)) {
+    removeStudent(student.id);
+  }
+}
 </script>
 
 <template>
@@ -92,17 +156,27 @@ function handleCellKeydown(e: KeyboardEvent, student: Student, lesson: Lesson) {
     <!-- Table Controls Bar -->
     <div class="px-4 sm:px-6 py-3 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
       
-      <!-- Student Filter Search -->
-      <div class="flex items-center gap-2">
-        <div class="relative w-64 sm:w-80">
+      <!-- Student Filter Search & Quick Add Button -->
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <div class="relative w-56 sm:w-72">
           <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             v-model="studentQuery"
             type="text"
-            placeholder="Швидкий пошук учня за прізвищем..."
+            placeholder="Пошук учня за прізвищем..."
             class="w-full pl-9 pr-3.5 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
           />
         </div>
+
+        <button
+          @click="startAddStudent"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-xl text-indigo-700 bg-indigo-50 border border-indigo-200/80 hover:bg-indigo-100 hover:border-indigo-300 active:bg-indigo-200/70 shadow-xs transition-all cursor-pointer"
+          title="Додати нового учня до списку журналу"
+        >
+          <UserPlus class="w-4 h-4 text-indigo-600" />
+          <span>+ Додати учня</span>
+        </button>
+
         <span v-if="studentQuery" class="text-xs text-slate-500">
           Знайдено: {{ filteredStudents.length }}
         </span>
@@ -156,14 +230,25 @@ function handleCellKeydown(e: KeyboardEvent, student: Student, lesson: Lesson) {
         <thead class="sticky top-0 z-20 bg-slate-50">
           <tr>
             <!-- Sticky Student Header (Left Column) -->
-            <th class="sticky left-0 z-30 bg-slate-100 border-b-2 border-r-2 border-slate-300 px-4 py-3.5 min-w-[240px] max-w-[280px] shadow-sm">
+            <th class="sticky left-0 z-30 bg-slate-100 border-b-2 border-r-2 border-slate-300 px-4 py-3 min-w-[280px] max-w-[320px] shadow-sm">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Список учнів
-                </span>
-                <span class="text-[11px] font-semibold text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-200">
-                  {{ filteredStudents.length }} учн.
-                </span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Список учнів
+                  </span>
+                  <span class="text-[11px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">
+                    {{ journal.students.length }}
+                  </span>
+                </div>
+
+                <button
+                  @click="startAddStudent"
+                  class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
+                  title="Швидко додати учня"
+                >
+                  <Plus class="w-3.5 h-3.5" />
+                  <span>Додати</span>
+                </button>
               </div>
             </th>
 
@@ -214,27 +299,76 @@ function handleCellKeydown(e: KeyboardEvent, student: Student, lesson: Lesson) {
             :key="student.id"
             class="hover:bg-indigo-50/20 transition-colors group"
           >
-            <!-- Sticky Student Name & Quick Stats -->
-            <td class="sticky left-0 z-10 bg-white group-hover:bg-indigo-50/40 border-r-2 border-b border-slate-300 px-4 py-2.5 shadow-sm transition-colors">
-              <div class="flex items-center gap-3">
-                <span class="w-5 text-center text-xs font-semibold text-slate-400 shrink-0">
-                  {{ sIdx + 1 }}
-                </span>
-                <div class="flex-1 min-w-0">
-                  <div class="text-xs sm:text-sm font-semibold text-slate-900 truncate" :title="student.name">
-                    {{ student.name }}
-                  </div>
-                  <!-- Mini Stats Indicator -->
-                  <div class="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
-                    <span v-if="getStudentStats(student.id).absences > 0" class="text-rose-600 font-medium">
-                      Пропусків: {{ getStudentStats(student.id).absences }}
-                    </span>
-                    <span v-else class="text-slate-400">
-                      Оцінок: {{ getStudentStats(student.id).gradeCount }}
-                    </span>
+            <!-- Sticky Student Name & Quick Stats + Action Buttons -->
+            <td class="sticky left-0 z-10 bg-white group-hover:bg-indigo-50/40 border-r-2 border-b border-slate-300 px-3.5 py-2.5 shadow-sm transition-colors">
+              
+              <!-- Inline Editing Mode -->
+              <div v-if="editingStudentId === student.id" class="flex items-center gap-1.5">
+                <input
+                  ref="editStudentInputRef"
+                  v-model="editingStudentName"
+                  type="text"
+                  class="flex-1 px-2.5 py-1 text-xs sm:text-sm font-semibold bg-white border-2 border-indigo-500 rounded-lg focus:outline-none shadow-xs"
+                  @keyup.enter="handleSaveEditStudent(student.id)"
+                  @keyup.esc="cancelEditStudent"
+                />
+                <button
+                  @click="handleSaveEditStudent(student.id)"
+                  class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                  title="Зберегти ім'я"
+                >
+                  <Check class="w-4 h-4" />
+                </button>
+                <button
+                  @click="cancelEditStudent"
+                  class="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                  title="Скасувати"
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </div>
+
+              <!-- Normal Display Mode -->
+              <div v-else class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                  <span class="w-5 text-center text-xs font-semibold text-slate-400 shrink-0">
+                    {{ sIdx + 1 }}
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs sm:text-sm font-semibold text-slate-900 truncate" :title="student.name">
+                      {{ student.name }}
+                    </div>
+                    <!-- Mini Stats Indicator -->
+                    <div class="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                      <span v-if="getStudentStats(student.id).absences > 0" class="text-rose-600 font-medium">
+                        Пропусків: {{ getStudentStats(student.id).absences }}
+                      </span>
+                      <span v-else class="text-slate-400">
+                        Оцінок: {{ getStudentStats(student.id).gradeCount }}
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                <!-- Hover Quick Actions for Student (Edit / Delete) -->
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
+                  <button
+                    @click.stop="startEditStudent(student)"
+                    class="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer"
+                    title="Редагувати ім'я учня"
+                  >
+                    <Edit2 class="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    @click.stop="handleRemoveStudent(student)"
+                    class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                    title="Видалити учня зі списку"
+                  >
+                    <Trash2 class="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
+
             </td>
 
             <!-- Grade Cells for Each Lesson -->
@@ -276,10 +410,65 @@ function handleCellKeydown(e: KeyboardEvent, student: Student, lesson: Lesson) {
             </td>
           </tr>
 
+          <!-- Inline Add Student Form Row -->
+          <tr v-if="isAddingStudent" class="bg-indigo-50/30">
+            <td class="sticky left-0 z-10 bg-indigo-50/70 border-r-2 border-b border-slate-300 px-3.5 py-2.5 shadow-sm">
+              <form @submit.prevent="handleAddStudentSubmit" class="flex items-center gap-1.5">
+                <input
+                  ref="addStudentInputRef"
+                  v-model="newStudentName"
+                  type="text"
+                  placeholder="Введіть ПІБ нового учня..."
+                  class="flex-1 px-2.5 py-1 text-xs sm:text-sm font-medium bg-white border-2 border-indigo-500 rounded-lg focus:outline-none shadow-xs"
+                  @keyup.esc="cancelAddStudent"
+                />
+                <button
+                  type="submit"
+                  class="p-1.5 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors cursor-pointer"
+                  title="Додати учня"
+                >
+                  <Check class="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  @click="cancelAddStudent"
+                  class="p-1.5 text-slate-500 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer"
+                  title="Скасувати"
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </form>
+            </td>
+            <td :colspan="journal.lessons.length" class="border-b border-r border-slate-200 bg-slate-50/40 text-xs text-slate-400 px-4 italic">
+              Новий учень з'явиться в загальному списку та автоматично впорядкується за алфавітом.
+            </td>
+          </tr>
+
+          <!-- Quick "+ Додати учня" prompt row at bottom of table -->
+          <tr v-else-if="filteredStudents.length > 0">
+            <td class="sticky left-0 z-10 bg-slate-50 hover:bg-indigo-50/40 border-r-2 border-b border-slate-300 px-4 py-2 transition-colors">
+              <button
+                @click="startAddStudent"
+                class="inline-flex items-center gap-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer py-1 w-full"
+              >
+                <Plus class="w-3.5 h-3.5" />
+                <span>+ Додати ще одного учня</span>
+              </button>
+            </td>
+            <td :colspan="journal.lessons.length" class="border-b border-slate-200 bg-slate-50/20"></td>
+          </tr>
+
           <!-- Empty State -->
-          <tr v-if="filteredStudents.length === 0">
+          <tr v-if="filteredStudents.length === 0 && !isAddingStudent">
             <td :colspan="journal.lessons.length + 1" class="text-center py-12 text-sm text-slate-400">
-              Учнів за вашим запитом не знайдено.
+              <p>Учнів за вашим запитом не знайдено.</p>
+              <button
+                @click="startAddStudent"
+                class="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors cursor-pointer"
+              >
+                <UserPlus class="w-4 h-4" />
+                <span>Додати першого учня</span>
+              </button>
             </td>
           </tr>
         </tbody>
@@ -309,7 +498,7 @@ function handleCellKeydown(e: KeyboardEvent, student: Student, lesson: Lesson) {
       </div>
 
       <div class="hidden sm:flex items-center gap-2 text-slate-400">
-        <span>Клікніть на будь-яку клітинку для швидкого виставлення оцінки або відмітки</span>
+        <span>Наведіть на учня, щоб відредагувати (✏️) або видалити (🗑️) зі списку</span>
       </div>
     </div>
 
