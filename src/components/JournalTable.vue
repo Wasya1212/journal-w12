@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, watch } from 'vue';
 import type { Student, Lesson } from '../types/journal';
 import { useJournal } from '../composables/useJournal';
+import { useResponsive } from '../composables/useResponsive';
 import {
   Search,
   ChevronLeft,
@@ -21,9 +22,22 @@ const props = defineProps<{
 }>();
 
 const { journal, getGrade, addStudent, updateStudent, removeStudent } = useJournal();
+const { isMobile } = useResponsive();
+
+const isStudentsCollapsed = ref(false);
+
+function toggleStudentsList() {
+  isStudentsCollapsed.value = !isStudentsCollapsed.value;
+}
 
 const studentQuery = ref('');
 const tableScrollRef = ref<HTMLDivElement | null>(null);
+
+watch(studentQuery, (val) => {
+  if (val && isStudentsCollapsed.value) {
+    isStudentsCollapsed.value = false;
+  }
+});
 
 // Inline Add Student State
 const isAddingStudent = ref(false);
@@ -105,6 +119,9 @@ function handleCellKeydown(e: KeyboardEvent, student: Student, lesson: Lesson) {
 
 // Student Management Functions
 async function startAddStudent() {
+  if (isMobile.value && isStudentsCollapsed.value) {
+    isStudentsCollapsed.value = false;
+  }
   isAddingStudent.value = true;
   newStudentName.value = '';
   await nextTick();
@@ -233,22 +250,26 @@ function handleRemoveStudent(student: Student) {
     </div>
 
     <!-- Main Table Container with Sticky Column & Smooth Scroll -->
-    <div
-      ref="tableScrollRef"
-      class="flex-1 overflow-auto bg-slate-100/50 table-container relative select-none"
-    >
-      <table class="border-separate border-spacing-0 min-w-full text-left">
-        
-        <!-- Table Header -->
-        <thead class="sticky top-0 z-20 bg-slate-50">
-          <tr>
-            <!-- Sticky Student Header (Left Column) -->
-            <th class="sticky left-0 z-30 bg-slate-100 border-b-2 border-r-2 border-slate-300 px-4 py-3 min-w-[280px] max-w-[320px] shadow-sm">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Список учнів
-                  </span>
+    <div class="relative flex-1 min-h-0 flex flex-col">
+      <div
+        ref="tableScrollRef"
+        class="flex-1 overflow-auto bg-slate-100/50 table-container relative select-none"
+      >
+        <table class="border-separate border-spacing-0 min-w-full text-left">
+          
+          <!-- Table Header -->
+          <thead class="sticky top-0 z-20 bg-slate-50">
+            <tr>
+              <!-- Sticky Student Header (Left Column) -->
+              <th
+                v-show="!isStudentsCollapsed || !isMobile"
+                class="sticky left-0 z-30 bg-slate-100 border-b-2 border-r-2 border-slate-300 px-3 sm:px-4 py-3 w-[240px] min-w-[240px] max-w-[240px] lg:w-[280px] lg:min-w-[280px] lg:max-w-[320px] shadow-sm transition-all"
+              >
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Список учнів
+                    </span>
                   <span class="text-[11px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">
                     {{ journal.students.length }}
                   </span>
@@ -313,7 +334,10 @@ function handleRemoveStudent(student: Student) {
             class="hover:bg-indigo-50/20 transition-colors group"
           >
             <!-- Sticky Student Name & Quick Stats + Action Buttons -->
-            <td class="sticky left-0 z-10 bg-white group-hover:bg-indigo-50/40 border-r-2 border-b border-slate-300 px-3.5 py-2.5 shadow-sm transition-colors">
+            <td
+              v-show="!isStudentsCollapsed || !isMobile"
+              class="sticky left-0 z-10 bg-white group-hover:bg-indigo-50/40 border-r-2 border-b border-slate-300 px-3 sm:px-3.5 py-2.5 shadow-sm transition-colors w-[240px] min-w-[240px] max-w-[240px] lg:w-[280px] lg:min-w-[280px] lg:max-w-[320px]"
+            >
               
               <!-- Inline Editing Mode -->
               <div v-if="editingStudentId === student.id" class="flex items-center gap-1.5">
@@ -458,7 +482,7 @@ function handleRemoveStudent(student: Student) {
           </tr>
 
           <!-- Quick "+ Додати учня" prompt row at bottom of table -->
-          <tr v-else-if="filteredStudents.length > 0">
+          <tr v-else-if="filteredStudents.length > 0 && (!isStudentsCollapsed || !isMobile)">
             <td class="sticky left-0 z-10 bg-slate-50 hover:bg-indigo-50/40 border-r-2 border-b border-slate-300 px-4 py-2 transition-colors">
               <button
                 @click="startAddStudent"
@@ -473,7 +497,7 @@ function handleRemoveStudent(student: Student) {
 
           <!-- Empty State -->
           <tr v-if="filteredStudents.length === 0 && !isAddingStudent">
-            <td :colspan="journal.lessons.length + 1" class="text-center py-12 text-sm text-slate-400">
+            <td :colspan="isStudentsCollapsed && isMobile ? journal.lessons.length : journal.lessons.length + 1" class="text-center py-12 text-sm text-slate-400">
               <p>Учнів за вашим запитом не знайдено.</p>
               <button
                 @click="startAddStudent"
@@ -488,6 +512,23 @@ function handleRemoveStudent(student: Student) {
 
       </table>
     </div>
+
+    <!-- Mobile Collapse / Expand Floating Button (20px width x 40px height) -->
+    <button
+      v-if="isMobile"
+      @click.stop="toggleStudentsList"
+      type="button"
+      class="mobile-students-toggle absolute z-40 top-1/2 -translate-y-1/2 w-[20px] h-[40px] bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white shadow-md border-y border-r border-indigo-700/90 rounded-r-md transition-all duration-200 cursor-pointer select-none items-center justify-center group"
+      :style="{ left: isStudentsCollapsed ? '0px' : '240px' }"
+      :title="isStudentsCollapsed ? 'Показати список учнів' : 'Сховати список учнів'"
+      :aria-label="isStudentsCollapsed ? 'Показати список учнів' : 'Сховати список учнів'"
+    >
+      <!-- Invisible extended touch area for mobile taps -->
+      <span class="absolute -inset-2.5" aria-hidden="true"></span>
+      <ChevronRight v-if="isStudentsCollapsed" :size="14" :stroke-width="2.5" class="-mr-0.5 group-hover:scale-110 transition-transform" />
+      <ChevronLeft v-else :size="14" :stroke-width="2.5" class="-ml-0.5 group-hover:scale-110 transition-transform" />
+    </button>
+  </div>
 
     <!-- Bottom Status / Hint Bar -->
     <div class="px-6 py-2 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex items-center justify-between shrink-0">

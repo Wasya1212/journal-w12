@@ -43,11 +43,18 @@
   display: none !important;
 }
 
+.mobile-students-toggle {
+  display: none !important;
+}
+
 @media (max-width: 1023px), (max-height: 560px) {
   .desktop-only-header {
     display: none !important;
   }
   .mobile-only-burger {
     display: inline-flex !important;
+  }
+  .mobile-students-toggle {
+    display: flex !important;
   }
 }
