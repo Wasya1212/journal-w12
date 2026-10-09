@@ -11,11 +11,13 @@ import {
   Edit2,
   Check,
   X,
-  UserPlus
+  UserPlus,
+  Menu
 } from 'lucide-vue-next';
 
 const props = defineProps<{
   onSelectCell: (student: Student, lesson: Lesson) => void;
+  onOpenMobileMenu?: () => void;
 }>();
 
 const { journal, getGrade, addStudent, updateStudent, removeStudent } = useJournal();
@@ -151,45 +153,46 @@ function handleRemoveStudent(student: Student) {
 </script>
 
 <template>
-  <div class="flex flex-col h-[calc(100vh-80px)]">
+  <div class="flex flex-col h-full flex-1 min-h-0">
     
     <!-- Table Controls Bar -->
-    <div class="px-4 sm:px-6 py-3 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
+    <div class="px-3 sm:px-6 py-2.5 sm:py-3 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 shrink-0">
       
       <!-- Student Filter Search & Quick Add Button -->
-      <div class="flex items-center gap-2.5 flex-wrap">
-        <div class="relative w-56 sm:w-72">
+      <div class="flex items-center gap-2 sm:gap-2.5 flex-1 sm:flex-initial min-w-[200px]">
+        <div class="relative flex-1 sm:w-64 md:w-72">
           <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             v-model="studentQuery"
             type="text"
-            placeholder="Пошук учня за прізвищем..."
+            placeholder="Пошук учня..."
             class="w-full pl-9 pr-3.5 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
           />
         </div>
 
         <button
           @click="startAddStudent"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-xl text-indigo-700 bg-indigo-50 border border-indigo-200/80 hover:bg-indigo-100 hover:border-indigo-300 active:bg-indigo-200/70 shadow-xs transition-all cursor-pointer"
+          class="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-xl text-indigo-700 bg-indigo-50 border border-indigo-200/80 hover:bg-indigo-100 hover:border-indigo-300 active:bg-indigo-200/70 shadow-xs transition-all cursor-pointer shrink-0"
           title="Додати нового учня до списку журналу"
         >
           <UserPlus class="w-4 h-4 text-indigo-600" />
-          <span>+ Додати учня</span>
+          <span class="hidden sm:inline">+ Додати учня</span>
+          <span class="sm:hidden">+ Учень</span>
         </button>
 
-        <span v-if="studentQuery" class="text-xs text-slate-500">
+        <span v-if="studentQuery" class="text-xs text-slate-500 hidden lg:inline">
           Знайдено: {{ filteredStudents.length }}
         </span>
       </div>
 
-      <!-- Navigation & Scrolling shortcuts -->
-      <div class="flex items-center gap-2">
-        <span class="hidden md:inline text-xs text-slate-400 font-medium mr-1">
+      <!-- Navigation & Scrolling shortcuts + Mobile Burger Menu Button -->
+      <div class="flex items-center gap-1 sm:gap-1.5 ml-auto">
+        <span class="hidden xl:inline text-xs text-slate-400 font-medium mr-1">
           Навігація по уроках:
         </span>
         <button
           @click="scrollToBeginning"
-          class="px-2.5 py-1.5 text-xs font-semibold rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+          class="px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
           title="До першого уроку"
         >
           Початок
@@ -210,10 +213,20 @@ function handleRemoveStudent(student: Student) {
         </button>
         <button
           @click="scrollToEnd"
-          class="px-2.5 py-1.5 text-xs font-semibold rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+          class="px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
           title="До останнього уроку"
         >
           Кінець
+        </button>
+
+        <!-- Burger menu button (Mobile only: portrait & landscape) -->
+        <button
+          @click="props.onOpenMobileMenu?.()"
+          class="mobile-only-burger items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-md shadow-indigo-200 transition-all cursor-pointer ml-1 shrink-0"
+          title="Відкрити меню дій та налаштувань"
+        >
+          <Menu class="w-4 h-4" />
+          <span class="text-xs font-semibold">Меню</span>
         </button>
       </div>
 

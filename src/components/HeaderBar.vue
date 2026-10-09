@@ -40,7 +40,7 @@ function handleReset() {
 </script>
 
 <template>
-  <header class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+  <header class="desktop-only-header bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 shadow-xs">
     <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         
@@ -109,7 +109,7 @@ function handleReset() {
           <button
             @click="exportToJson"
             class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100/80 active:bg-indigo-100 shadow-xs transition-all cursor-pointer"
-            title="Завантажити поточний стан журналу у файл journal.json"
+            title="Завантажити поточний стан журналу у файл з датою та часом (journal_YYYY-MM-DD_HH-mm-ss.json)"
           >
             <Download class="w-4 h-4 text-indigo-600" />
             <span>Експорт в JSON</span>

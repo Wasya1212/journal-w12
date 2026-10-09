@@ -32,3 +32,22 @@
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
+
+/* Responsive display helpers for Mobile (portrait & landscape) vs Desktop */
+/* Desktop: width >= 1024px AND height > 560px */
+.desktop-only-header {
+  display: block !important;
+}
+
+.mobile-only-burger {
+  display: none !important;
+}
+
+@media (max-width: 1023px), (max-height: 560px) {
+  .desktop-only-header {
+    display: none !important;
+  }
+  .mobile-only-burger {
+    display: inline-flex !important;
+  }
+}

@@ -214,18 +214,31 @@ export function useJournal() {
     }
   }
 
+  function formatTimestampForFilename(d = new Date()): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    const seconds = pad(d.getSeconds());
+    return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+  }
+
   function exportToJson(): string {
+    const timestamp = formatTimestampForFilename();
+    const fileName = `journal_${timestamp}.json`;
     const dataStr = JSON.stringify(journal.value, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'journal.json';
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    showToast('Журнал успішно експортовано у файл journal.json');
+    showToast(`Журнал експортовано у файл ${fileName}`);
     return dataStr;
   }
 
